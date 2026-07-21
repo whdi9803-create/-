@@ -177,8 +177,8 @@
       <input type="text" id="answerInput" placeholder="여기에 입력" autocomplete="off">
     </div>
     <div class="field">
-      <label>이름 <span style="text-transform:none; letter-spacing:0; color:#A9A290; font-weight:400;">(선택)</span></label>
-      <input type="text" id="nameInput" placeholder="입력하지 않아도 참여됩니다" autocomplete="off">
+      <label>성함 <span style="text-transform:none; letter-spacing:0; color:#A8654F; font-weight:600;">(필수)</span></label>
+      <input type="text" id="nameInput" placeholder="성함을 입력해주세요" autocomplete="off">
     </div>
     <button type="button" class="submit-btn" id="submitBtn">정답 확인</button>
     <div class="hint-msg" id="hintMsg">다시 한 번 생각해보세요! (힌트: 뇌에서 시작해 등뼈 속을 지나는 신경 다발이에요)</div>
@@ -192,8 +192,21 @@
     </div>
     <div class="success-body">
       <div class="reward-box">
-        <div class="reward-text">이 화면을 그대로 보여주시면<br>작은 선물을 드립니다</div>
-        <div class="reward-location">7F 피트니스 데스크</div>
+        <div class="reward-text">이 화면을 보여주시고,<br>7F 피트니스 데스크에서 수령해주세요.</div>
+      </div>
+      <div class="success-note">Vol.01 · 2026.07 이달의 퀴즈</div>
+    </div>
+  </div>
+
+  <div id="closedScreen" class="success-screen">
+    <div class="success-banner">
+      <div class="success-stamp">🌿</div>
+      <div class="success-title">퀴즈 참여기간이 종료되었습니다</div>
+      <div class="success-sub">CLOSED</div>
+    </div>
+    <div class="success-body">
+      <div class="reward-box">
+        <div class="reward-text">다음 달 퀴즈에 참여해주세요!</div>
       </div>
       <div class="success-note">Vol.01 · 2026.07 이달의 퀴즈</div>
     </div>
@@ -224,6 +237,12 @@
   // 이 값을 매달 바꿔주세요 (Vol.01 → Vol.02 ...). 바꾸면 새 호에서 다시 참여 가능해집니다.
   const QUIZ_ID = "bl_quiz_vol01";
 
+  // 이 날짜까지 참여 가능, 다음날부터 "참여기간 종료" 화면으로 전환됩니다. 다음 달로 넘어갈 때 같이 바꿔주세요.
+  const QUIZ_DEADLINE = "2026-08-15";
+  function todayKST() {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+  }
+
   // 기기 식별: localStorage 하나만 쓰면 그것만 지워도 재참여가 되므로, 만료기간이 긴 쿠키에도 같이 표시해서 둘 다 지워야 재참여가 가능하게 함
   function getCookie(name) {
     const m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
@@ -242,9 +261,12 @@
     return localStorage.getItem(QUIZ_ID) === 'done' || getCookie(QUIZ_ID) === 'done';
   }
 
-  // 페이지 로드 시, 이 기기(브라우저)에서 이미 참여했는지 확인
-  (function checkAlreadyParticipated() {
-    if (hasParticipated()) {
+  // 페이지 로드 시, 참여기간이 끝났는지 / 이 기기(브라우저)에서 이미 참여했는지 확인
+  (function checkStatus() {
+    if (todayKST() > QUIZ_DEADLINE) {
+      document.getElementById('quizScreen').style.display = 'none';
+      document.getElementById('closedScreen').style.display = 'block';
+    } else if (hasParticipated()) {
       markParticipated(); // 저장소 한쪽만 남아있던 경우 다시 동기화
       document.getElementById('quizScreen').style.display = 'none';
       document.getElementById('alreadyScreen').style.display = 'block';
@@ -255,6 +277,11 @@
     const input = document.getElementById('answerInput').value.trim();
     const name = document.getElementById('nameInput').value.trim();
     const hint = document.getElementById('hintMsg');
+
+    if (!name) {
+      alert('성함을 입력해주세요.');
+      return;
+    }
 
     if (input.indexOf('척수') !== -1) {
       document.getElementById('quizScreen').style.display = 'none';
